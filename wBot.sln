@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36212.18 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "WeatherAPP.sln (2)", "..\WeatherAPP.sln (2)\", "{1EDF69CC-D282-ABE3-849E-39890BDCB0E4}"
+	ProjectSection(WebsiteProperties) = preProject
+		TargetFrameworkMoniker = ".NETFramework,Version%3Dv4.8.1"
+		Debug.AspNetCompiler.VirtualPath = "/localhost_55856"
+		Debug.AspNetCompiler.PhysicalPath = "..\WeatherAPP.sln (2)\"
+		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_55856\"
+		Debug.AspNetCompiler.Updateable = "true"
+		Debug.AspNetCompiler.ForceOverwrite = "true"
+		Debug.AspNetCompiler.FixedNames = "false"
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.VirtualPath = "/localhost_55856"
+		Release.AspNetCompiler.PhysicalPath = "..\WeatherAPP.sln (2)\"
+		Release.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_55856\"
+		Release.AspNetCompiler.Updateable = "true"
+		Release.AspNetCompiler.ForceOverwrite = "true"
+		Release.AspNetCompiler.FixedNames = "false"
+		Release.AspNetCompiler.Debug = "False"
+		VWDPort = "55856"
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1EDF69CC-D282-ABE3-849E-39890BDCB0E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1EDF69CC-D282-ABE3-849E-39890BDCB0E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A32EDE1F-63D4-401A-A94E-2B060B86DF17}
+	EndGlobalSection
+EndGlobal
