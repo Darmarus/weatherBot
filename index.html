@@ -1,0 +1,86 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description"
+          content="Weather AI Assistant — chatbot doradzający ubiór do pogody." />
+    <meta name="theme-color" content="#6d28d9" />
+    <title>Weather AI Assistant 🌦️</title>
+
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+          rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <main class="app">
+        <section class="chat-container" aria-label="Okno czatu z asystentem pogodowym">
+
+            <!-- ===== NAGŁÓWEK ===== -->
+            <header class="chat-header">
+                <div class="chat-header__id">
+                    <img src="assets/bot.svg" alt="" class="chat-header__avatar" width="40" height="40" />
+                    <h1 class="chat-header__title">Weather Assistant</h1>
+                </div>
+
+                <div class="chat-header__actions">
+                    <button id="weather-toggle" class="icon-btn" type="button"
+                            aria-label="Pobierz pogodę z mojego miasta" title="Pobierz pogodę z miasta">
+                        📍
+                    </button>
+                    <button id="clear-btn" class="icon-btn" type="button"
+                            aria-label="Wyczyść historię rozmowy" title="Wyczyść historię">
+                        🗑️
+                    </button>
+                    <button id="theme-toggle" class="icon-btn" type="button"
+                            aria-label="Przełącz tryb jasny / ciemny" title="Tryb jasny / ciemny"
+                            aria-pressed="false">
+                        🌙
+                    </button>
+                </div>
+            </header>
+
+            <!-- ===== PANEL POGODY Z API (opcjonalny, chowany) ===== -->
+            <div id="weather-panel" class="weather-panel" hidden>
+                <form id="weather-form" class="weather-panel__form" autocomplete="off">
+                    <label class="sr-only" for="city-input">Nazwa miasta</label>
+                    <input id="city-input" class="weather-panel__input" type="text"
+                           placeholder="Wpisz miasto, np. Warszawa…" />
+                    <button class="weather-panel__btn" type="submit">Sprawdź</button>
+                </form>
+                <p class="weather-panel__hint" id="weather-hint">
+                    Pobiera dane z OpenWeather. Bez klucza API bot użyje danych demonstracyjnych.
+                </p>
+            </div>
+
+            <!-- ===== OKNO WIADOMOŚCI ===== -->
+            <div id="chat-box" class="chat-box" role="log" aria-live="polite" aria-relevant="additions"
+                 aria-label="Historia rozmowy">
+                <!-- Wiadomości dodawane dynamicznie przez script.js -->
+            </div>
+
+            <!-- ===== PASEK WPROWADZANIA ===== -->
+            <form class="chat-input" id="chat-form" autocomplete="off">
+                <label class="sr-only" for="user-input">Twoja wiadomość</label>
+                <input type="text" id="user-input" class="chat-input__field"
+                       placeholder="Np. „Jest 7 stopni i pada deszcz”…"
+                       aria-describedby="input-hint" />
+                <button type="submit" id="send-btn" class="chat-input__send" aria-label="Wyślij wiadomość">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12 2-12 2z" fill="currentColor" />
+                    </svg>
+                </button>
+            </form>
+            <p id="input-hint" class="sr-only">
+                Wpisz temperaturę i warunki pogodowe, a asystent doradzi odpowiedni ubiór.
+            </p>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
