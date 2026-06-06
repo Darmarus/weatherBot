@@ -1,0 +1,384 @@
+﻿/* =========================================================
+   Weather AI Assistant — style.css
+   HTML5 + CSS3 | Minimalistyczny, czysty interfejs
+   ========================================================= */
+
+/* ---------- 1. Zmienne motywu (light) ---------- */
+:root {
+	--bg-1: #eef2ff;
+	--bg-2: #e0e7ff;
+	--surface: #ffffff;
+	--border: #e6e8f0;
+	--text: #1e2233;
+	--text-soft: #6b7280;
+	--user-bg: #6d28d9;
+	--user-text: #ffffff;
+	--bot-bg: #f3f4f8;
+	--bot-text: #1e2233;
+	--accent: #6d28d9;
+	--accent-soft: rgba(109, 40, 217, 0.10);
+	--shadow: 0 10px 30px rgba(31, 38, 89, 0.10);
+	--radius: 18px;
+	--radius-sm: 12px;
+	--ease: ease;
+}
+
+/* ---------- 2. Dark mode ---------- */
+body.dark {
+	--bg-1: #0f172a;
+	--bg-2: #1e1b34;
+	--surface: #171b2e;
+	--border: #2a2f45;
+	--text: #e7e9f4;
+	--text-soft: #9aa1b9;
+	--user-bg: #7c3aed;
+	--user-text: #ffffff;
+	--bot-bg: #232743;
+	--bot-text: #e7e9f4;
+	--accent: #a855f7;
+	--accent-soft: rgba(168, 85, 247, 0.15);
+	--shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+/* ---------- 3. Reset i podstawy ---------- */
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	min-height: 100vh;
+	font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+	color: var(--text);
+	background: linear-gradient(160deg, var(--bg-1), var(--bg-2));
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px 16px;
+	transition: background 0.3s var(--ease), color 0.3s var(--ease);
+}
+
+/* ---------- 4. Layout ---------- */
+.app {
+	width: 100%;
+	max-width: 440px;
+}
+
+.chat-container {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow);
+	display: flex;
+	flex-direction: column;
+	height: min(80vh, 680px);
+	overflow: hidden;
+}
+
+/* ---------- 5. Nagłówek ---------- */
+.chat-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 14px 16px;
+	border-bottom: 1px solid var(--border);
+}
+
+.chat-header__id {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.chat-header__avatar {
+	border-radius: 50%;
+	background: var(--accent-soft);
+	padding: 2px;
+}
+
+.chat-header__title {
+	font-size: 1rem;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+.chat-header__actions {
+	display: flex;
+	gap: 6px;
+}
+
+.icon-btn {
+	width: 36px;
+	height: 36px;
+	display: grid;
+	place-items: center;
+	font-size: 1.05rem;
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	background: transparent;
+	cursor: pointer;
+	transition: background 0.2s var(--ease);
+}
+
+	.icon-btn:hover {
+		background: var(--accent-soft);
+	}
+
+	.icon-btn:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
+	}
+
+/* ---------- 6. Panel pogody (API) ---------- */
+.weather-panel {
+	padding: 12px 16px;
+	border-bottom: 1px solid var(--border);
+	background: var(--accent-soft);
+}
+
+.weather-panel__form {
+	display: flex;
+	gap: 8px;
+}
+
+.weather-panel__input {
+	flex: 1;
+	padding: 9px 12px;
+	border-radius: var(--radius-sm);
+	border: 1px solid var(--border);
+	background: var(--surface);
+	color: var(--text);
+	font-size: 0.88rem;
+}
+
+	.weather-panel__input:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 1px;
+	}
+
+.weather-panel__btn {
+	padding: 9px 14px;
+	border: none;
+	border-radius: var(--radius-sm);
+	background: var(--accent);
+	color: #fff;
+	font-weight: 500;
+	cursor: pointer;
+}
+
+	.weather-panel__btn:hover {
+		filter: brightness(1.08);
+	}
+
+.weather-panel__hint {
+	margin-top: 7px;
+	font-size: 0.72rem;
+	color: var(--text-soft);
+}
+
+/* ---------- 7. Okno wiadomości ---------- */
+.chat-box {
+	flex: 1;
+	overflow-y: auto;
+	padding: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	scrollbar-width: thin;
+	scrollbar-color: var(--border) transparent;
+}
+
+	.chat-box::-webkit-scrollbar {
+		width: 7px;
+	}
+
+	.chat-box::-webkit-scrollbar-thumb {
+		background: var(--border);
+		border-radius: 8px;
+	}
+
+/* ---------- 8. Wiadomości ---------- */
+.msg {
+	max-width: 84%;
+	padding: 10px 14px;
+	border-radius: 16px;
+	font-size: 0.9rem;
+	line-height: 1.5;
+	word-wrap: break-word;
+	white-space: pre-wrap;
+	animation: fadeIn 0.25s var(--ease) both;
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Wiadomość użytkownika */
+.user-message {
+	align-self: flex-end;
+	background: var(--user-bg);
+	color: var(--user-text);
+	border-bottom-right-radius: 5px;
+}
+
+/* Wiadomość bota */
+.bot-message {
+	align-self: flex-start;
+	background: var(--bot-bg);
+	color: var(--bot-text);
+	border-bottom-left-radius: 5px;
+}
+
+.msg__time {
+	display: block;
+	margin-top: 4px;
+	font-size: 0.65rem;
+	opacity: 0.55;
+}
+
+/* ---------- 9. Wskaźnik pisania ---------- */
+.typing {
+	align-self: flex-start;
+	display: inline-flex;
+	gap: 4px;
+	padding: 12px 14px;
+	background: var(--bot-bg);
+	border-radius: 16px;
+	border-bottom-left-radius: 5px;
+}
+
+	.typing span {
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		background: var(--text-soft);
+		animation: typing-bounce 1.2s infinite ease-in-out;
+	}
+
+		.typing span:nth-child(2) {
+			animation-delay: 0.18s;
+		}
+
+		.typing span:nth-child(3) {
+			animation-delay: 0.36s;
+		}
+
+@keyframes typing-bounce {
+	0%, 80%, 100% {
+		transform: scale(0.7);
+		opacity: 0.5;
+	}
+
+	40% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+
+/* ---------- 10. Pasek wprowadzania ---------- */
+.chat-input {
+	display: flex;
+	gap: 8px;
+	padding: 12px 16px;
+	border-top: 1px solid var(--border);
+}
+
+.chat-input__field {
+	flex: 1;
+	padding: 11px 14px;
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	background: var(--surface);
+	color: var(--text);
+	font-size: 0.9rem;
+	transition: border-color 0.2s var(--ease);
+}
+
+	.chat-input__field:focus-visible {
+		outline: none;
+		border-color: var(--accent);
+	}
+
+.chat-input__send {
+	flex: 0 0 auto;
+	width: 44px;
+	height: 44px;
+	display: grid;
+	place-items: center;
+	border: none;
+	border-radius: 50%;
+	background: var(--accent);
+	color: #fff;
+	cursor: pointer;
+	transition: filter 0.2s var(--ease);
+}
+
+	.chat-input__send:hover {
+		filter: brightness(1.08);
+	}
+
+	.chat-input__send:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
+	}
+
+/* ---------- 11. Dostępność (ukrycie wizualne) ---------- */
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* ---------- 12. Responsywność ---------- */
+@media (max-width: 768px) {
+	.app {
+		max-width: 100%;
+	}
+
+	.chat-container {
+		height: 88vh;
+	}
+}
+
+@media (max-width: 480px) {
+	body {
+		padding: 10px;
+	}
+
+	.chat-container {
+		height: 94vh;
+		border-radius: 14px;
+	}
+
+	.msg {
+		max-width: 90%;
+	}
+}
+
+/* ---------- 13. Szanuj preferencję ograniczenia ruchu ---------- */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.001ms !important;
+		transition-duration: 0.001ms !important;
+	}
+}

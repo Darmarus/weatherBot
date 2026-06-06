@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Asystent pogodowy">
+  <defs>
+    <linearGradient id="botGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#6d28d9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- tło -->
+  <circle cx="24" cy="24" r="24" fill="url(#botGrad)"/>
+
+  <!-- słońce za chmurą -->
+  <g stroke="#fde68a" stroke-width="2" stroke-linecap="round">
+    <line x1="15" y1="12" x2="15" y2="8"/>
+    <line x1="8.5" y1="14.5" x2="6" y2="12"/>
+    <line x1="6.5" y1="21" x2="3" y2="21"/>
+  </g>
+  <circle cx="15" cy="20" r="5.5" fill="#fde68a"/>
+
+  <!-- chmura -->
+  <path d="M16 30c-3 0-5.4-2.4-5.4-5.4 0-2.7 2-5 4.7-5.3.9-2.6 3.4-4.5 6.3-4.5 3.2 0 5.9 2.3 6.5 5.3.3-.1.6-.1.9-.1 2.9 0 5.2 2.3 5.2 5.2S31.9 30 29 30H16z" fill="#ffffff"/>
+
+  <!-- oczy bota -->
+  <circle cx="20" cy="23.5" r="1.6" fill="#6d28d9"/>
+  <circle cx="27" cy="23.5" r="1.6" fill="#6d28d9"/>
+
+  <!-- krople deszczu -->
+  <g fill="#bae6fd">
+    <path d="M17 33c0 1-.8 1.8-1.8 1.8S13.4 34 13.4 33c0-1 1.8-3 1.8-3s1.8 2 1.8 3z"/>
+    <path d="M25 34.5c0 1-.8 1.8-1.8 1.8s-1.8-.8-1.8-1.8c0-1 1.8-3 1.8-3s1.8 2 1.8 3z"/>
+    <path d="M33 33c0 1-.8 1.8-1.8 1.8S29.4 34 29.4 33c0-1 1.8-3 1.8-3s1.8 2 1.8 3z"/>
+  </g>
+</svg>
