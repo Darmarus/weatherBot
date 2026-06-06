@@ -121,13 +121,34 @@ const WeatherBrain = (() => {
    Działa po wpisaniu klyucza; w przeciwnym razie zwraca demo.
    ========================================================= */
 const WeatherAPI = (() => {
+    // 🔑 Klucz z https://home.openweathermap.org/api_keys
+    const API_KEY = "6f7de560e975af0b9acaaf438164af32";
     const BASE = "https://api.openweathermap.org/data/2.5/weather";
 
     async function fetchByCity(city) {
         if (!API_KEY) {
+            // Tryb demonstracyjny bez klucza — losowe, ale realistyczne dane
             return demoData(city);
         }
         const url = `${BASE}?q=${encodeURIComponent(city)}&units=metric&lang=pl&appid=${API_KEY}`;
+
+        let res;
+        try {
+            res = await fetch(url);
+        } catch {
+            // Brak sieci / błąd połączenia → łagodny fallback na dane demo
+            return demoData(city, "brak połączenia z API");
+        }
+
+        if (!res.ok) {
+            // 401 = klucz jeszcze nieaktywny lub nieprawidłowy → fallback na demo,
+            // żeby czat działał, zanim klucz OpenWeather się aktywuje (~do 2 godz.).
+            if (res.status === 401) return demoData(city, "klucz API jeszcze nieaktywny");
+            if (res.status === 404) throw new Error(`Nie znaleziono miasta „${city}”.`);
+            if (res.status === 429) throw new Error("Przekroczono limit zapytań do API — spróbuj za chwilę.");
+            throw new Error(`Błąd pobierania pogody (HTTP ${res.status}).`);
+        }
+
         const data = await res.json();
         return {
             city: data.name,
@@ -137,6 +158,7 @@ const WeatherAPI = (() => {
         };
     }
 
+    function demoData(city, reason = "") {
         const samples = [
             { temp: 6, description: "lekki deszcz" },
             { temp: -3, description: "opady śniegu" },
@@ -144,6 +166,7 @@ const WeatherAPI = (() => {
             { temp: 12, description: "pochmurno i wietrznie" },
         ];
         const s = samples[Math.floor(Math.random() * samples.length)];
+        return { city: city || "Twoje miasto", ...s, demo: true, demoReason: reason };
     }
 
     return { fetchByCity, hasKey: () => Boolean(API_KEY) };
@@ -179,6 +202,7 @@ const ChatUI = (() => {
 
         const textNode = document.createElement("span");
         textNode.classList.add("msg__text");
+        textNode.textContent = message; // textContent = bezpieczne (brak XSS)
         div.appendChild(textNode);
 
         const timeNode = document.createElement("span");
@@ -244,6 +268,8 @@ const ChatUI = (() => {
     function greet() {
         botReply(
             "Cześć! Jestem Twoim asystentem pogodowym. 🌦️\n" +
+            "Opisz pogodę (np. „Jest 7 stopni i pada deszcz”) lub wpisz samą nazwę " +
+            "miasta (np. „Warszawa”), a doradzę Ci, jak się ubrać. Możesz też kliknąć 📍.",
             400
         );
     }
@@ -317,6 +343,9 @@ const ChatUI = (() => {
             const data = await WeatherAPI.fetchByCity(city);
             hideTyping();
 
+            const demoNote = data.demo
+                ? ` (dane demonstracyjne${data.demoReason ? " — " + data.demoReason : " — dodaj klucz API"})`
+                : "";
             addMessage(
                 `🌍 ${data.city}: ${data.temp}°, ${data.description}${demoNote}`,
                 "bot-message"
