@@ -13,7 +13,6 @@
    ========================================================= */
 const WeatherBrain = (() => {
 
-    /* Wyciąga temperaturę z tekstu, np. "jest -5 stopni" → -5 */
     function parseTemperature(text) {
         // dopasowanie liczby (z opcjonalnym minusem) przy słowach stopni/°/C
         const match = text.match(/(-?\d+)\s*(?:°|stopn|stopni|c\b|℃)/i)
@@ -22,7 +21,6 @@ const WeatherBrain = (() => {
         return match ? parseInt(match[1], 10) : null;
     }
 
-    /* Wykrywa warunki pogodowe na podstawie słów kluczowych */
     function detectConditions(text) {
         const t = text.toLowerCase();
         return {
@@ -58,7 +56,6 @@ const WeatherBrain = (() => {
         const c = detectConditions(text);
         const tempClass = classifyTemp(temp);
 
-        // Brak jakichkolwiek danych → poproś o doprecyzowanie
         const noData = temp === null &&
             !c.rain && !c.snow && !c.wind && !c.sun && !c.fog && !c.storm && !c.cold && !c.hot;
         if (noData) {
@@ -68,7 +65,6 @@ const WeatherBrain = (() => {
 
         const parts = [];
 
-        /* --- 1. Strój bazowy wg temperatury --- */
         if (tempClass) {
             parts.push(`Przy ${temp}° (${tempClass.label}) załóż ${tempClass.layers}.`);
         } else if (c.cold) {
@@ -77,7 +73,6 @@ const WeatherBrain = (() => {
             parts.push("Jest gorąco — wybierz przewiewne, jasne ubrania.");
         }
 
-        /* --- 2. Ochrona przed deszczem --- */
         if (c.rain || c.storm) {
             parts.push("☔ Pada — weź kurtkę przeciwdeszczową lub parasol oraz wodoodporne buty.");
         }
@@ -126,33 +121,13 @@ const WeatherBrain = (() => {
    Działa po wpisaniu klyucza; w przeciwnym razie zwraca demo.
    ========================================================= */
 const WeatherAPI = (() => {
-    // 🔑 Wstaw swój klucz z https://openweathermap.org/api
-    const API_KEY = "6f7de560e975af0b9acaaf438164af32";
     const BASE = "https://api.openweathermap.org/data/2.5/weather";
 
     async function fetchByCity(city) {
         if (!API_KEY) {
-            // Tryb demonstracyjny bez klucza — losowe, ale realistyczne dane
             return demoData(city);
         }
         const url = `${BASE}?q=${encodeURIComponent(city)}&units=metric&lang=pl&appid=${API_KEY}`;
-
-        let res;
-        try {
-            res = await fetch(url);
-        } catch {
-            // Brak sieci / błąd połączenia → łagodny fallback na dane demo
-            return demoData(city, "brak połączenia z API");
-        }
-
-        if (!res.ok) {
-            // 401 = klucz jeszcze nieaktywny lub nieprawidłowy → fallback na demo,
-            // żeby czat działał, zanim klucz OpenWeather się aktywuje (~do 2 godz.).
-            if (res.status === 401) return demoData(city, "klucz API jeszcze nieaktywny");
-            if (res.status === 404) throw new Error(`Nie znaleziono miasta „${city}”.`);
-            if (res.status === 429) throw new Error("Przekroczono limit zapytań do API — spróbuj za chwilę.");
-            throw new Error(`Błąd pobierania pogody (HTTP ${res.status}).`);
-        }
         const data = await res.json();
         return {
             city: data.name,
@@ -162,7 +137,6 @@ const WeatherAPI = (() => {
         };
     }
 
-    function demoData(city, reason = "") {
         const samples = [
             { temp: 6, description: "lekki deszcz" },
             { temp: -3, description: "opady śniegu" },
@@ -170,7 +144,6 @@ const WeatherAPI = (() => {
             { temp: 12, description: "pochmurno i wietrznie" },
         ];
         const s = samples[Math.floor(Math.random() * samples.length)];
-        return { city: city || "Twoje miasto", ...s, demo: true, demoReason: reason };
     }
 
     return { fetchByCity, hasKey: () => Boolean(API_KEY) };
@@ -181,7 +154,6 @@ const WeatherAPI = (() => {
    MODUŁ 3 — ChatUI: warstwa interfejsu i sterowanie aplikacją
    ========================================================= */
 const ChatUI = (() => {
-    /* --- Referencje DOM --- */
     const chatBox = document.getElementById("chat-box");
     const chatForm = document.getElementById("chat-form");
     const userInput = document.getElementById("user-input");
@@ -196,7 +168,6 @@ const ChatUI = (() => {
     const STORAGE_KEY = "weatherbot.history";
     const THEME_KEY = "weatherbot.theme";
 
-    /* --- Pomocnik: aktualny czas HH:MM --- */
     function now() {
         return new Date().toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
     }
@@ -208,7 +179,6 @@ const ChatUI = (() => {
 
         const textNode = document.createElement("span");
         textNode.classList.add("msg__text");
-        textNode.textContent = message; // textContent = bezpieczne (brak XSS)
         div.appendChild(textNode);
 
         const timeNode = document.createElement("span");
@@ -237,7 +207,6 @@ const ChatUI = (() => {
         document.getElementById("typing-indicator")?.remove();
     }
 
-    /* --- Auto-scroll na dół --- */
     function scrollToBottom() {
         chatBox.scrollTop = chatBox.scrollHeight;
     }
@@ -251,9 +220,6 @@ const ChatUI = (() => {
         }, delay);
     }
 
-    /* =========================================================
-       LocalStorage — historia rozmowy
-       ========================================================= */
     function loadHistory() {
         try {
             return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
@@ -278,8 +244,6 @@ const ChatUI = (() => {
     function greet() {
         botReply(
             "Cześć! Jestem Twoim asystentem pogodowym. 🌦️\n" +
-            "Opisz pogodę (np. „Jest 7 stopni i pada deszcz”) lub wpisz samą nazwę " +
-            "miasta (np. „Warszawa”), a doradzę Ci, jak się ubrać. Możesz też kliknąć 📍.",
             400
         );
     }
@@ -353,9 +317,6 @@ const ChatUI = (() => {
             const data = await WeatherAPI.fetchByCity(city);
             hideTyping();
 
-            const demoNote = data.demo
-                ? ` (dane demonstracyjne${data.demoReason ? " — " + data.demoReason : " — dodaj klucz API"})`
-                : "";
             addMessage(
                 `🌍 ${data.city}: ${data.temp}°, ${data.description}${demoNote}`,
                 "bot-message"
@@ -374,12 +335,10 @@ const ChatUI = (() => {
        Inicjalizacja — podpięcie zdarzeń i wczytanie stanu
        ========================================================= */
     function init() {
-        // Motyw z LocalStorage lub preferencji systemu
         const savedTheme = localStorage.getItem(THEME_KEY)
             || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
         applyTheme(savedTheme);
 
-        // Wczytaj historię lub przywitaj
         const history = loadHistory();
         if (history.length) {
             history.forEach(m => addMessage(m.message, m.sender, m.time, false));
@@ -393,15 +352,12 @@ const ChatUI = (() => {
             handleUserMessage(userInput.value);
         });
 
-        // Dark mode
         themeToggle.addEventListener("click", toggleTheme);
 
-        // Czyszczenie historii
         clearBtn.addEventListener("click", () => {
             if (confirm("Wyczyścić całą historię rozmowy?")) clearHistory();
         });
 
-        // Panel pogody
         weatherToggle.addEventListener("click", () => {
             weatherPanel.hidden = !weatherPanel.hidden;
             if (!weatherPanel.hidden) {
@@ -421,5 +377,4 @@ const ChatUI = (() => {
     return { init };
 })();
 
-/* Start aplikacji po załadowaniu DOM */
 document.addEventListener("DOMContentLoaded", ChatUI.init);
