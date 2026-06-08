@@ -41,8 +41,49 @@
                             aria-pressed="false">
                         🌙
                     </button>
+                    <button id="settings-toggle" class="icon-btn" type="button"
+                            aria-label="Ustawienia asystenta" title="Ustawienia (tryb standard / smart)"
+                            aria-expanded="false" aria-controls="settings-panel">
+                        ⚙️
+                    </button>
                 </div>
             </header>
+
+            <!-- ===== PANEL USTAWIEŃ (tryb standard / smart) ===== -->
+            <div id="settings-panel" class="settings-panel" hidden>
+                <fieldset class="settings-panel__modes">
+                    <legend class="settings-panel__legend">Tryb asystenta</legend>
+
+                    <label class="mode-option">
+                        <input type="radio" name="mode" value="standard" />
+                        <span class="mode-option__title">Standard</span>
+                        <span class="mode-option__desc">Wbudowana logika — działa offline, bez klucza.</span>
+                    </label>
+
+                    <label class="mode-option">
+                        <input type="radio" name="mode" value="smart" />
+                        <span class="mode-option__title">Smart (OpenRouter)</span>
+                        <span class="mode-option__desc">Odpowiedź pisze model AI na podstawie oceny pogody.</span>
+                    </label>
+                </fieldset>
+
+                <div id="smart-fields" class="settings-panel__smart" hidden>
+                    <label class="settings-field">
+                        <span class="settings-field__label">Klucz OpenRouter API</span>
+                        <input id="openrouter-key" class="settings-field__input" type="password"
+                               placeholder="sk-or-..." autocomplete="off" spellcheck="false" />
+                    </label>
+                    <label class="settings-field">
+                        <span class="settings-field__label">Nazwa modelu</span>
+                        <input id="openrouter-model" class="settings-field__input" type="text"
+                               placeholder="np. openai/gpt-4o-mini" autocomplete="off" spellcheck="false" />
+                    </label>
+                </div>
+
+                <p class="settings-panel__hint" id="settings-hint">
+                    Ustawienia zapisują się lokalnie w Twojej przeglądarce.
+                </p>
+            </div>
 
             <!-- ===== PANEL POGODY Z API (opcjonalny, chowany) ===== -->
             <div id="weather-panel" class="weather-panel" hidden>
