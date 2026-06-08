@@ -51,14 +51,21 @@ const WeatherBrain = (() => {
        Główna funkcja: buduje rekomendację na podstawie
        temperatury i warunków. Zwraca sformatowany tekst.
     */
-    function recommend(text, knownTemp = null) {
+    /* Strukturalna analiza pogody — wspólna baza dla trybu standard i smart.
+       Zwraca surowe dane (temp, warunki, klasa), z których tryb standard buduje
+       poradę, a tryb smart przekazuje je modelowi AI jako „ocenę pogody”. */
+    function analyze(text, knownTemp = null) {
         const temp = knownTemp !== null ? knownTemp : parseTemperature(text);
-        const c = detectConditions(text);
+        const conditions = detectConditions(text);
         const tempClass = classifyTemp(temp);
+        const hasData = temp !== null || Object.values(conditions).some(Boolean);
+        return { temp, conditions, tempClass, hasData };
+    }
 
-        const noData = temp === null &&
-            !c.rain && !c.snow && !c.wind && !c.sun && !c.fog && !c.storm && !c.cold && !c.hot;
-        if (noData) {
+    function recommend(text, knownTemp = null) {
+        const { temp, conditions: c, tempClass, hasData } = analyze(text, knownTemp);
+
+        if (!hasData) {
             return "Chętnie doradzę! 🌤️ Napisz, jaka jest temperatura i pogoda — " +
                 "np. „Jest 7 stopni i pada deszcz”, a dobiorę dla Ciebie ubiór.";
         }
@@ -112,7 +119,7 @@ const WeatherBrain = (() => {
         return "💡 Styl: warstwy łatwo dopasujesz do zmiennej pogody — i wyglądają modnie.";
     }
 
-    return { recommend, parseTemperature, detectConditions, classifyTemp };
+    return { recommend, analyze, parseTemperature, detectConditions, classifyTemp };
 })();
 
 
@@ -174,7 +181,141 @@ const WeatherAPI = (() => {
 
 
 /* =========================================================
-   MODUŁ 3 — ChatUI: warstwa interfejsu i sterowanie aplikacją
+   MODUŁ 3 — Settings: tryb pracy (standard / smart) + konfiguracja
+   OpenRouter. Trwałość w LocalStorage. Bez DOM.
+   ========================================================= */
+const Settings = (() => {
+    const KEY = "weatherbot.settings";
+    const defaults = { mode: "standard", apiKey: "", model: "" };
+
+    let state = load();
+
+    function load() {
+        try {
+            return { ...defaults, ...(JSON.parse(localStorage.getItem(KEY)) || {}) };
+        } catch {
+            return { ...defaults };
+        }
+    }
+
+    function persist() {
+        localStorage.setItem(KEY, JSON.stringify(state));
+    }
+
+    function get() {
+        return { ...state };
+    }
+
+    function update(patch) {
+        state = { ...state, ...patch };
+        persist();
+        return get();
+    }
+
+    /* Tryb smart jest aktywny tylko, gdy wybrano go ORAZ podano klucz i model. */
+    function isSmart() {
+        return state.mode === "smart" && Boolean(state.apiKey) && Boolean(state.model);
+    }
+
+    return { get, update, isSmart };
+})();
+
+
+/* =========================================================
+   MODUŁ 4 — SmartAdvisor: rekomendacja generowana przez model AI
+   (OpenRouter). Otrzymuje ocenę pogody z WeatherBrain jako materiał
+   i wyrażenia, ale treść utrzymuje adekwatną do tej oceny.
+   ========================================================= */
+const SmartAdvisor = (() => {
+    const ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
+
+    /* Buduje wiadomości dla modelu: system ustala ton i ograniczenia,
+       user przekazuje konkretną ocenę pogody oraz wyrażenia do parafrazy. */
+    function buildMessages({ description, assessment, reference }) {
+        const { temp, tempClass, conditions } = assessment;
+
+        const condList = Object.entries(conditions)
+            .filter(([, on]) => on)
+            .map(([name]) => name)
+            .join(", ") || "brak szczególnych";
+
+        const tempInfo = temp !== null
+            ? `${temp}°C (${tempClass ? tempClass.label : "—"})`
+            : "nieznana";
+        const layers = tempClass ? tempClass.layers : "—";
+
+        const system = [
+            "Jesteś przyjaznym asystentem pogodowym, który doradza, jak się ubrać.",
+            "Odpowiadasz po polsku, ciepło i zwięźle (2–4 zdania).",
+            "Trzymaj się ściśle przekazanej oceny pogody — nie zmyślaj temperatury ani warunków.",
+            "Możesz swobodnie parafrazować podane wyrażenia i dodać 1–2 pasujące emoji.",
+        ].join(" ");
+
+        const user = [
+            `Pogoda: ${description || "—"}.`,
+            `Temperatura: ${tempInfo}.`,
+            `Wykryte warunki: ${condList}.`,
+            `Sugerowany ubiór (ocena): ${layers}.`,
+            "",
+            "Wyrażenia, których możesz użyć (parafrazuj, nie kopiuj dosłownie):",
+            reference,
+            "",
+            "Napisz na tej podstawie naturalną rekomendację ubioru, adekwatną do powyższej oceny pogody.",
+        ].join("\n");
+
+        return [
+            { role: "system", content: system },
+            { role: "user", content: user },
+        ];
+    }
+
+    async function advise(payload, settings) {
+        const { apiKey, model } = settings;
+        if (!apiKey) throw new Error("brak klucza OpenRouter");
+        if (!model) throw new Error("brak nazwy modelu");
+
+        let res;
+        try {
+            res = await fetch(ENDPOINT, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${apiKey}`,
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": location.origin,
+                    "X-Title": "Weather Assistant",
+                },
+                body: JSON.stringify({
+                    model,
+                    messages: buildMessages(payload),
+                    temperature: 0.7,
+                    max_tokens: 300,
+                }),
+            });
+        } catch {
+            throw new Error("brak połączenia z OpenRouter");
+        }
+
+        if (!res.ok) {
+            let detail = `HTTP ${res.status}`;
+            try {
+                const err = await res.json();
+                detail = err?.error?.message || detail;
+            } catch { /* odpowiedź bez JSON-a — zostaje kod HTTP */ }
+            throw new Error(detail);
+        }
+
+        const data = await res.json();
+        const content = data?.choices?.[0]?.message?.content?.trim();
+        if (!content) throw new Error("pusta odpowiedź modelu");
+        return content;
+    }
+
+    return { advise };
+})();
+
+
+/* =========================================================
+   MODUŁ 5 — ChatUI: warstwa interfejsu i sterowanie aplikacją
    ========================================================= */
 const ChatUI = (() => {
     const chatBox = document.getElementById("chat-box");
@@ -187,6 +328,13 @@ const ChatUI = (() => {
     const weatherForm = document.getElementById("weather-form");
     const cityInput = document.getElementById("city-input");
     const weatherHint = document.getElementById("weather-hint");
+    const settingsToggle = document.getElementById("settings-toggle");
+    const settingsPanel = document.getElementById("settings-panel");
+    const smartFields = document.getElementById("smart-fields");
+    const keyInput = document.getElementById("openrouter-key");
+    const modelInput = document.getElementById("openrouter-model");
+    const settingsHint = document.getElementById("settings-hint");
+    const modeRadios = () => document.querySelectorAll('input[name="mode"]');
 
     const STORAGE_KEY = "weatherbot.history";
     const THEME_KEY = "weatherbot.theme";
@@ -308,8 +456,39 @@ const ChatUI = (() => {
             return;
         }
 
-        const response = WeatherBrain.recommend(text);
-        botReply(response);
+        respondWithRecommendation(text);
+    }
+
+    /* =========================================================
+       Rekomendacja: tryb standardowy (WeatherBrain) lub smart (OpenRouter).
+       W trybie smart ocena z WeatherBrain trafia do modelu jako materiał;
+       przy braku danych pogodowych albo błędzie — fallback na tryb standard.
+       ========================================================= */
+    async function respondWithRecommendation(text, knownTemp = null) {
+        const assessment = WeatherBrain.analyze(text, knownTemp);
+        const fallback = WeatherBrain.recommend(text, knownTemp);
+
+        // Bez danych pogodowych nie ma czego analizować — klasyczna podpowiedź.
+        if (!assessment.hasData || !Settings.isSmart()) {
+            botReply(fallback);
+            return;
+        }
+
+        showTyping();
+        try {
+            const reply = await SmartAdvisor.advise(
+                { description: text, assessment, reference: fallback },
+                Settings.get()
+            );
+            hideTyping();
+            addMessage(reply, "bot-message");
+        } catch (err) {
+            hideTyping();
+            addMessage(
+                `${fallback}\n\n⚠️ Tryb smart niedostępny (${err.message}) — użyłem trybu standardowego.`,
+                "bot-message"
+            );
+        }
     }
 
     /* --- Heurystyka: czy tekst wygląda jak sama nazwa miasta? --- */
@@ -352,12 +531,64 @@ const ChatUI = (() => {
             );
 
             // Łączymy temperaturę z API z analizą warunków z opisu
-            const recommendation = WeatherBrain.recommend(data.description, data.temp);
-            botReply(recommendation, 600);
+            await respondWithRecommendation(data.description, data.temp);
         } catch (err) {
             hideTyping();
             addMessage(`⚠️ ${err.message}`, "bot-message");
         }
+    }
+
+    /* =========================================================
+       Panel ustawień (tryb standard / smart + dane OpenRouter)
+       ========================================================= */
+
+    /* Komunikat pomocniczy zależny od stanu — model pokazujemy, klucz NIGDY. */
+    function settingsStatus() {
+        const s = Settings.get();
+        if (s.mode === "standard") {
+            return "Tryb standardowy — wbudowana logika, bez klucza.";
+        }
+        if (!s.apiKey || !s.model) {
+            return "Uzupełnij klucz OpenRouter i nazwę modelu, aby włączyć tryb smart.";
+        }
+        return `Tryb smart gotowy ✓ — odpowiedzi pisze model „${s.model}”.`;
+    }
+
+    /* Synchronizuje kontrolki z zapisanym stanem i pokazuje/chowa pola smart. */
+    function syncSettingsUI() {
+        const s = Settings.get();
+        modeRadios().forEach(r => { r.checked = r.value === s.mode; });
+        keyInput.value = s.apiKey;
+        modelInput.value = s.model;
+        smartFields.hidden = s.mode !== "smart";
+        settingsHint.textContent = settingsStatus();
+    }
+
+    function bindSettings() {
+        settingsToggle.addEventListener("click", () => {
+            const open = settingsPanel.hidden;
+            settingsPanel.hidden = !open;
+            settingsToggle.setAttribute("aria-expanded", String(open));
+            if (open) syncSettingsUI();
+        });
+
+        modeRadios().forEach(radio => {
+            radio.addEventListener("change", () => {
+                Settings.update({ mode: radio.value });
+                smartFields.hidden = radio.value !== "smart";
+                settingsHint.textContent = settingsStatus();
+            });
+        });
+
+        keyInput.addEventListener("input", () => {
+            Settings.update({ apiKey: keyInput.value.trim() });
+            settingsHint.textContent = settingsStatus();
+        });
+
+        modelInput.addEventListener("input", () => {
+            Settings.update({ model: modelInput.value.trim() });
+            settingsHint.textContent = settingsStatus();
+        });
     }
 
     /* =========================================================
@@ -401,6 +632,9 @@ const ChatUI = (() => {
             e.preventDefault();
             handleCityWeather(cityInput.value);
         });
+
+        bindSettings();
+        syncSettingsUI();
     }
 
     return { init };

@@ -15,6 +15,7 @@ Aplikacja w czystym **Vanilla JS** (bez frameworków), z integracją **OpenWeath
 - 💬 **Czat** — rekomendacja ubioru na podstawie temperatury i warunków pogodowych
 - 🏙️ **Pogoda dla miasta** — wpisz nazwę miasta w czacie lub użyj panelu 📍 (dane z OpenWeather)
 - 🧠 **Analiza języka polskiego** — rozpoznaje temperaturę i warunki (deszcz, śnieg, wiatr, słońce, mgła, burza, mróz, upał) z tekstu
+- 🤖 **Tryb smart (OpenRouter)** — opcjonalnie odpowiedź pisze model AI na podstawie oceny pogody z `WeatherBrain` (patrz niżej)
 - 🌗 **Tryb jasny / ciemny** — z zapamiętaniem wyboru i wykrywaniem preferencji systemu
 - 💾 **Historia rozmowy** — zapisywana w `localStorage`
 - ⌨️ **Wskaźnik pisania**, animacje, auto-scroll
@@ -36,12 +37,15 @@ Aplikacja w czystym **Vanilla JS** (bez frameworków), z integracją **OpenWeath
 
 ### Architektura `script.js`
 
-Kod podzielony jest na trzy niezależne moduły (wzorzec IIFE):
+Kod podzielony jest na niezależne moduły (wzorzec IIFE):
 
 1. **`WeatherBrain`** — czysta logika rekomendacji (bez DOM): parsowanie temperatury,
-   wykrywanie warunków, klasyfikacja i budowa porady. Łatwa do testowania.
+   wykrywanie warunków, klasyfikacja i budowa porady. `analyze()` zwraca strukturalną
+   ocenę pogody używaną przez oba tryby. Łatwa do testowania.
 2. **`WeatherAPI`** — integracja z OpenWeather (Fetch API) z trybem demo jako fallback.
-3. **`ChatUI`** — warstwa interfejsu: wiadomości, historia, dark mode, obsługa zdarzeń.
+3. **`Settings`** — tryb pracy (standard / smart) i konfiguracja OpenRouter, trwałość w `localStorage`.
+4. **`SmartAdvisor`** — rekomendacja generowana przez model AI (OpenRouter) na podstawie oceny z `WeatherBrain`.
+5. **`ChatUI`** — warstwa interfejsu: wiadomości, historia, dark mode, panel ustawień, obsługa zdarzeń.
 
 ---
 
@@ -81,6 +85,28 @@ Aby pobierać prawdziwą pogodę:
 > ⚠️ **Uwaga:** w aplikacji front-endowej klucz jest widoczny dla każdego, kto
 > otworzy źródło strony. Dla projektu demonstracyjnego to akceptowalne; w wersji
 > produkcyjnej klucz należy ukryć za własnym proxy backendowym.
+
+---
+
+## 🤖 Tryb smart (OpenRouter)
+
+Domyślnie asystent działa w trybie **standardowym** — odpowiedzi buduje wbudowana
+logika `WeatherBrain` (offline, bez kluczy). Tryb **smart** włączysz w panelu
+ustawień (przycisk **⚙️** w prawym górnym rogu):
+
+1. Kliknij **⚙️** i wybierz **Smart (OpenRouter)**.
+2. Wklej swój klucz [OpenRouter](https://openrouter.ai/keys) i nazwę modelu
+   (np. `openai/gpt-4o-mini`, `anthropic/claude-3.5-haiku`).
+
+W trybie smart `WeatherBrain` nadal liczy ocenę pogody (temperatura, warunki,
+sugerowane warstwy), a następnie przekazuje ją modelowi jako materiał i wyrażenia
+do parafrazy. Model pisze finalną odpowiedź, ale **treść pozostaje adekwatna do
+przekazanej oceny** — nie zmyśla temperatury ani warunków. Gdy klucz/model są
+puste albo API zwróci błąd, asystent automatycznie wraca do trybu standardowego.
+
+> ⚠️ **Uwaga:** klucz zapisywany jest w `localStorage` przeglądarki (jak klucz
+> OpenWeather). Dla projektu demonstracyjnego to akceptowalne; w wersji
+> produkcyjnej kieruj zapytania przez własny backend/proxy, by nie ujawniać klucza.
 
 ---
 
